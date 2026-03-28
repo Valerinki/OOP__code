@@ -1,0 +1,191 @@
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+class Rezervare {
+protected:
+    string nume;
+    string data;
+    string ora;
+    int nrPersoane;
+
+public:
+    Rezervare(string n, string d, string o, int nr) {
+        nume = n;
+        data = d;
+        ora = o;
+        nrPersoane = nr;
+    }
+
+    virtual ~Rezervare() {}
+
+    virtual double calculeazaPret() = 0;
+
+    virtual int calculeazaDurata() {
+        return 2;
+    }
+
+    virtual void afiseaza() {
+        cout << "Client: " << nume << endl;
+        cout << "Data: " << data << " " << ora << endl;
+        cout << "Persoane: " << nrPersoane << endl;
+    }
+};
+
+class RezervareZilnica : public Rezervare {
+public:
+    RezervareZilnica(string n, string d, string o, int nr)
+        : Rezervare(n, d, o, nr) {}
+
+    double calculeazaPret() override {
+        double pret = 50;
+        if (nrPersoane > 2) {
+            pret += (nrPersoane - 2) * 20;
+        }
+        return pret;
+    }
+
+    void afiseaza() override {
+        cout << "Tip: Rezervare Zilnica" << endl;
+        Rezervare::afiseaza();
+        cout << "Pret: " << calculeazaPret() << " lei" << endl;
+        cout << "------------------------" << endl;
+    }
+};
+
+class RezervareEvenimentSpecial : public Rezervare {
+public:
+    RezervareEvenimentSpecial(string n, string d, string o, int nr)
+        : Rezervare(n, d, o, nr) {}
+
+    int calculeazaDurata() override {
+        return 4;
+    }
+
+    double calculeazaPret() override {
+        double pret = 200;
+        int durata = calculeazaDurata();
+
+        if (durata > 3) {
+            pret += (durata - 3) * 50;
+        }
+
+        return pret;
+    }
+
+    void afiseaza() override {
+        cout << "Tip: Rezervare Eveniment Special" << endl;
+        Rezervare::afiseaza();
+        cout << "Durata: " << calculeazaDurata() << " ore" << endl;
+        cout << "Pret: " << calculeazaPret() << " lei" << endl;
+        cout << "------------------------" << endl;
+    }
+};
+
+class RezervareGrupMare : public Rezervare {
+public:
+    RezervareGrupMare(string n, string d, string o, int nr)
+        : Rezervare(n, d, o, nr) {}
+    double calculeazaPret() override {
+        double pret = 500;
+
+        if (nrPersoane > 20) {
+            pret += (nrPersoane - 20) * 10;
+        }
+
+        return pret;
+    }
+    void afiseaza() override {
+        cout << "Tip: Rezervare Grup Mare" << endl;
+        Rezervare::afiseaza();
+        cout << "Pret: " << calculeazaPret() << " lei" << endl;
+        cout << "------------------------" << endl;
+    }
+};
+class RezervareVIP : public Rezervare {
+private:
+    string facilitate;
+public:
+    RezervareVIP(string n, string d, string o, int nr, string f)
+        : Rezervare(n, d, o, nr) {
+        facilitate = f;
+    }
+    double calculeazaPret() override {
+        double pret = 1000;
+
+        if (facilitate == "karaoke") {
+            pret += 200;
+        }
+        else if (facilitate == "meniuPremium") {
+            pret += 300;
+        }
+        else if (facilitate == "decorSpecial") {
+            pret += 150;
+        }
+
+        if (nrPersoane > 5) {
+            pret += (nrPersoane - 5) * 100;
+        }
+
+        return pret;
+    }
+    void afiseaza() override {
+        cout << "Tip: Rezervare VIP" << endl;
+        Rezervare::afiseaza();
+        cout << "Facilitate: " << facilitate << endl;
+        cout << "Pret: " << calculeazaPret() << " lei" << endl;
+        cout << "------------------------" << endl;
+    }
+};
+
+int main() {
+    ifstream fin("rezervari.txt");
+    if (!fin) {
+        cout << "Eroare la deschiderea fisierului!" << endl;
+        return 0;
+    }
+    vector<Rezervare*> rezervari;
+    string tip, nume, data, ora, facilitate;
+    int nr;
+    while (fin >> tip >> nume >> data >> ora >> nr) {
+        Rezervare* r = NULL;
+        if (tip == "Zilnica") {
+            r = new RezervareZilnica(nume, data, ora, nr);
+        }
+        else if (tip == "Eveniment") {
+            r = new RezervareEvenimentSpecial(nume, data, ora, nr);
+        }
+        else if (tip == "GrupMare") {
+            r = new RezervareGrupMare(nume, data, ora, nr);
+        }
+        else if (tip == "VIP") {
+            fin >> facilitate;
+            r = new RezervareVIP(nume, data, ora, nr, facilitate);
+        }
+        if (r != NULL) {
+            rezervari.push_back(r);
+        }
+    }
+    fin.close();
+    cout << "===== LISTA REZERVARI =====" << endl << endl;
+    for (int i = 0; i < rezervari.size(); i++) {
+        rezervari[i]->afiseaza();
+    }
+    for (int i = 0; i < rezervari.size(); i++) {
+        delete rezervari[i];
+    }
+    rezervari.clear();
+    return 0;
+}
+
+======Date fisier exemplu=======
+
+Zilnica Ana 2026-03-20 18:00 3
+Eveniment Mihai 2026-03-22 20:00 10
+GrupMare Ion 2026-03-25 19:00 25
+VIP Maria 2026-03-30 21:00 6 karaoke
+VIP Andrei 2026-04-02 20:00 8 meniuPremium
+VIP Elena 2026-04-05 19:00 7 decorSpecial
